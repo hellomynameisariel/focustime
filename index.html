@@ -108,11 +108,11 @@
 </head>
 <body>
 
-<button id="popOutButton" title="Open in new window">↗<span>pop-out</span></button>
+<button id="popOutButton" title="Open in new window">↗<span>Pop-out</span></button>
 
-<div id="status">Time until next session</div>
+<div id="status">Time until next session:</div>
 <div id="timer">00:00</div>
-<div class="slider-label" id="resizeLabel">resize</div>
+<div class="slider-label" id="resizeLabel">Resize:</div>
 <div class="slider-bar" id="sliderBar">
   <span>-</span>
   <input type="range" id="sizeSlider" min="4" max="30" value="12">
@@ -139,12 +139,15 @@
     </select>
   </label>
   <br>
-  <button onclick="startSession()">Start Session</button>
-  <button onclick="resetTimer()">Reset</button>
+  <button onclick="startSession()">Start session</button>
+</div>
+
+<div id="resetWrapper" style="margin-top: 20px; text-align: center;">
+  <button onclick="resetTimer()">Reset session</button>
 </div>
 
 <div id="footer">
-  <a href="https://hellomynameisariel.github.io/flowtools/" target="_blank">See All Flow Tools by Ariel</a>
+  <a href="https://hellomynameisariel.github.io/flowtools/" target="_blank">See all Flow Tools by Ariel</a>
 </div>
 
 <script>
@@ -197,7 +200,7 @@
       clearInterval(window._timerInterval);
       window._timerInterval = null;
       document.getElementById("controls").style.display = "block";
-      status.textContent = "Time until next session";
+      status.textContent = "Time until next session:";
       timerDisplay.textContent = "00:00";
       document.body.style.backgroundColor = "#000";
       document.body.style.color = "#ccc";
@@ -218,13 +221,13 @@
         status.textContent = "Session starts in:";
         setColors("--bg-green", "--text-dark");
       } else {
-        status.textContent = "Time until next session";
+        status.textContent = "Time until next session:";
         setColors("--bg-yellow", "--text-dark");
       }
       timerDisplay.textContent = formatTime(seconds);
     } else if (now < end) {
       const seconds = Math.floor((end - now) / 1000);
-      status.textContent = "Time in session remaining";
+      status.textContent = "Time in session remaining:";
       if (seconds <= 120) {
         setColors("--bg-red", "--text-dark");
       } else {
