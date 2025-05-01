@@ -6,168 +6,232 @@
   <title>FocusTime</title>
   <style>
     body {
-      font-family: sans-serif;
+      background-color: black;
+      color: #ccc;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       height: 100vh;
       margin: 0;
-      background-color: black;
-      color: white;
-      transition: background-color 1s ease;
+      font-family: Arial, sans-serif;
+      padding: 10px;
+      transition: background-color 1s, color 1s;
     }
 
-    select, button {
-      font-size: 1rem;
-      margin: 0.25rem;
-    }
-
-    .status {
-      padding: 0.5rem 1rem;
-      margin-top: 1rem;
-      border-radius: 5px;
-      font-size: 1.2rem;
-    }
-
-    .yellow { background-color: #fff3b0; color: black; }
-    .green { background-color: #caffbf; color: black; }
-    .red { background-color: #ffadad; color: black; }
-    .blue { background-color: #a0c4ff; color: black; }
-
-    #resetBtn {
-      margin-top: 1.5rem;
-      padding: 0.5rem 1rem;
-      background: #444;
-      color: white;
+    #popOutButton {
+      background: none;
       border: none;
+      color: inherit;
+      font-size: 1.2em;
       cursor: pointer;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #popOutButton span {
+      font-size: 0.7em;
+      margin-top: 2px;
+    }
+
+    #status {
+      margin-top: 50px;
+      font-size: 1.2em;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background-color: transparent;
+      text-align: center;
+    }
+
+    #timer {
+      font-size: var(--timer-font-size, 12vw);
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .slider-label {
+      margin-top: 10px;
+      font-size: 0.7em;
+      text-transform: lowercase;
+    }
+
+    .slider-bar {
+      display: flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    input[type=range] {
+      width: 160px;
+      background: transparent;
+    }
+
+    select {
+      font-size: 1em;
+      margin: 4px;
+    }
+
+    button {
+      margin-top: 10px;
+      font-size: 1em;
     }
   </style>
 </head>
 <body>
-  <h1>FocusTime</h1>
-  <label>Start Hour:
-    <select id="hourSelect"></select>
-  </label>
-  <label>Start Minute:
+
+<button id="popOutButton" title="Open in new window">↗<span>pop-out</span></button>
+
+<div id="status">Time until next session</div>
+<div id="timer">00:00</div>
+<div class="slider-label" id="resizeLabel">resize</div>
+<div class="slider-bar" id="sliderBar">
+  <span>-</span>
+  <input type="range" id="sizeSlider" min="4" max="30" value="12">
+  <span>+</span>
+</div>
+
+<!-- Controls -->
+<div style="margin-top: 20px; text-align: center;">
+  <label>Starting time:
+    <select id="hourSelect"></select>:
     <select id="minuteSelect">
-      <option value="0">:00</option>
-      <option value="15">:15</option>
-      <option value="30">:30</option>
-      <option value="45">:45</option>
+      <option value="0">00</option>
+      <option value="15">15</option>
+      <option value="30">30</option>
+      <option value="45">45</option>
     </select>
   </label>
-  <label>Duration:
+  <label>
+    Duration:
     <select id="durationSelect">
-      <option value="25">25 minutes</option>
-      <option value="50">50 minutes</option>
-      <option value="75">75 minutes</option>
+      <option value="25">25 min</option>
+      <option value="50">50 min</option>
+      <option value="75">75 min</option>
     </select>
   </label>
-  <button onclick="startSession()">Start</button>
+  <br>
+  <button onclick="startSession()">Start Session</button>
+  <button onclick="resetTimer()">Reset</button>
+</div>
 
-  <div id="status" class="status"></div>
-  <button id="resetBtn" onclick="confirmReset()">Reset</button>
+<script>
+  const hourSelect = document.getElementById("hourSelect");
+  const now = new Date();
+  const hourNow = now.getHours();
+  const hours12 = [(hourNow - 1 + 24) % 24, hourNow, (hourNow + 1) % 24];
 
-  <script>
-    const hourSelect = document.getElementById("hourSelect");
-    const now = new Date();
-    const currentHour = now.getHours();
-    [currentHour - 1, currentHour, currentHour + 1].forEach(hour => {
-      const option = document.createElement("option");
-      option.value = hour;
-      option.text = `${hour}:00`;
-      hourSelect.appendChild(option);
-    });
-    hourSelect.value = currentHour;
+  for (let h of hours12) {
+    const ampm = h >= 12 ? "PM" : "AM";
+    const hour12 = ((h + 11) % 12 + 1);
+    const opt = new Option(`${hour12} ${ampm}`, h);
+    hourSelect.appendChild(opt);
+  }
 
-    let interval;
-    const statusDiv = document.getElementById("status");
+  const status = document.getElementById("status");
+  const timerDisplay = document.getElementById("timer");
+  const sizeSlider = document.getElementById("sizeSlider");
+  const resizeLabel = document.getElementById("resizeLabel");
+  const sliderBar = document.getElementById("sliderBar");
 
-    function lightenColor(baseColor, percent) {
-      const amt = Math.round(255 * percent);
-      const hex = (c) => c.toString(16).padStart(2, "0");
-      return `rgb(${amt}, ${amt}, ${amt})`;
+  sizeSlider.addEventListener('input', () => {
+    document.documentElement.style.setProperty('--timer-font-size', sizeSlider.value + 'vw');
+  });
+
+  document.getElementById("popOutButton").addEventListener("click", () => {
+    const newWin = window.open(location.href, "_blank", "width=500,height=500");
+  });
+
+  function startSession() {
+    const h = parseInt(hourSelect.value);
+    const m = parseInt(document.getElementById("minuteSelect").value);
+    const d = parseInt(document.getElementById("durationSelect").value);
+    const start = new Date();
+    start.setHours(h, m, 0, 0);
+    const end = new Date(start.getTime() + d * 60000);
+
+    localStorage.setItem("focusStart", start.getTime());
+    localStorage.setItem("focusEnd", end.getTime());
+    localStorage.setItem("focusDuration", d);
+
+    update();
+    if (!window._timerInterval) window._timerInterval = setInterval(update, 1000);
+  }
+
+  function resetTimer() {
+    if (confirm("Do you really want to reset?")) {
+      localStorage.clear();
+      clearInterval(window._timerInterval);
+      window._timerInterval = null;
+      status.textContent = "Time until next session";
+      timerDisplay.textContent = "00:00";
+      document.body.style.backgroundColor = "#000";
+      document.body.style.color = "#ccc";
     }
+  }
 
-    function startSession() {
-      const startHour = parseInt(hourSelect.value);
-      const startMinute = parseInt(minuteSelect.value);
-      const duration = parseInt(durationSelect.value);
+  function update() {
+    const start = parseInt(localStorage.getItem("focusStart"));
+    const end = parseInt(localStorage.getItem("focusEnd"));
+    const duration = parseInt(localStorage.getItem("focusDuration"));
+    const now = Date.now();
 
-      const start = new Date();
-      start.setHours(startHour, startMinute, 0, 0);
+    if (!start || !end || !duration) return;
 
-      const end = new Date(start.getTime() + duration * 60000);
-      localStorage.setItem("focusStart", start.getTime());
-      localStorage.setItem("focusEnd", end.getTime());
-      localStorage.setItem("focusDuration", duration);
-      if (interval) clearInterval(interval);
-      runTimer();
-      interval = setInterval(runTimer, 1000);
-    }
-
-    function runTimer() {
-      const start = parseInt(localStorage.getItem("focusStart"));
-      const end = parseInt(localStorage.getItem("focusEnd"));
-      const duration = parseInt(localStorage.getItem("focusDuration"));
-      const now = new Date().getTime();
-
-      if (!start || !end || !duration) return;
-
-      if (now < start) {
-        const timeLeft = Math.floor((start - now) / 1000);
-        if (timeLeft <= 120) {
-          statusDiv.textContent = `Session starts in: ${formatTime(timeLeft)}`;
-          statusDiv.className = "status green";
-        } else {
-          statusDiv.textContent = `Time until next session: ${formatTime(timeLeft)}`;
-          statusDiv.className = "status yellow";
-        }
-        document.body.style.backgroundColor = "black";
-      } else if (now < end) {
-        const timeLeft = Math.floor((end - now) / 1000);
-        statusDiv.textContent = `Time in session remaining: ${formatTime(timeLeft)}`;
-        if (timeLeft <= 120) {
-          statusDiv.className = "status red";
-          document.body.style.backgroundColor = "#ffadad";
-        } else {
-          const elapsed = duration * 60 - timeLeft;
-          const lightenStep = (duration === 25) ? 300 : (duration === 50 ? 600 : 900);
-          const stepCount = Math.floor(elapsed / lightenStep);
-          const percent = stepCount / (duration / (lightenStep / 60));
-          document.body.style.backgroundColor = lightenColor("#000000", percent);
-          statusDiv.className = "status";
-        }
+    if (now < start) {
+      const seconds = Math.floor((start - now) / 1000);
+      if (seconds <= 120) {
+        status.textContent = "Session starts in:";
+        setColors("#caffbf", "#000");
       } else {
-        const overTime = Math.floor((now - end) / 1000);
-        statusDiv.textContent = `Session complete. Time since end: ${formatTime(overTime)}`;
-        statusDiv.className = "status blue";
-        document.body.style.backgroundColor = "#a0c4ff";
+        status.textContent = "Time until next session";
+        setColors("#fff3b0", "#000");
       }
-    }
-
-    function formatTime(seconds) {
-      const m = Math.floor(seconds / 60);
-      const s = seconds % 60;
-      return `${m}:${s.toString().padStart(2, '0')}`;
-    }
-
-    function confirmReset() {
-      if (confirm("Do you really want to reset?")) {
-        localStorage.removeItem("focusStart");
-        localStorage.removeItem("focusEnd");
-        localStorage.removeItem("focusDuration");
-        location.reload();
+      timerDisplay.textContent = formatTime(seconds);
+    } else if (now < end) {
+      const seconds = Math.floor((end - now) / 1000);
+      status.textContent = "Time in session remaining";
+      if (seconds <= 120) {
+        setColors("#ffadad", "#000");
+      } else {
+        const progress = (duration * 60 - seconds) / (duration * 60);
+        const light = Math.floor(progress * 255);
+        const bg = `rgb(${light},${light},${light})`;
+        const text = (light > 127) ? "#000" : "#fff";
+        setColors(bg, text);
       }
+      timerDisplay.textContent = formatTime(seconds);
+    } else {
+      const seconds = Math.floor((now - end) / 1000);
+      status.textContent = "Session complete. Time since end:";
+      setColors("#a0c4ff", "#000");
+      timerDisplay.textContent = formatTime(seconds);
     }
+  }
 
-    // Auto-resume
-    if (localStorage.getItem("focusStart")) {
-      runTimer();
-      interval = setInterval(runTimer, 1000);
-    }
-  </script>
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  }
+
+  function setColors(bg, text) {
+    document.body.style.backgroundColor = bg;
+    document.body.style.color = text;
+    resizeLabel.style.color = text;
+    sliderBar.style.backgroundColor = bg;
+  }
+
+  if (localStorage.getItem("focusStart")) {
+    update();
+    window._timerInterval = setInterval(update, 1000);
+  }
+</script>
+
 </body>
 </html>
