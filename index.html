@@ -5,9 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FocusTime</title>
   <style>
+    :root {
+      --text-light: #f5f5f5;
+      --text-dark: #111;
+      --bg-black: #000;
+      --bg-yellow: #fef08a;
+      --bg-green: #a8e6cf;
+      --bg-red: #ff6f69;
+      --bg-blue: #84b6f4;
+      --bg-gray: #888;
+    }
+
     body {
-      background-color: black;
-      color: #ccc;
+      background-color: var(--bg-black);
+      color: var(--text-light);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -39,17 +50,17 @@
     }
 
     #status {
-      margin-top: 50px;
+      margin-top: 40px;
+      margin-bottom: 4px;
       font-size: 1.2em;
       padding: 6px 12px;
       border-radius: 6px;
-      background-color: transparent;
       text-align: center;
     }
 
     #timer {
       font-size: var(--timer-font-size, 12vw);
-      margin-top: 20px;
+      margin-top: 0;
       text-align: center;
     }
 
@@ -72,14 +83,26 @@
       background: transparent;
     }
 
-    select {
+    select, button {
       font-size: 1em;
       margin: 4px;
+      background-color: #222;
+      color: var(--text-light);
+      border: 1px solid #444;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
     }
 
-    button {
-      margin-top: 10px;
-      font-size: 1em;
+    #controls, #footer {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    #footer a {
+      font-size: 0.7em;
+      color: #888;
+      text-decoration: none;
     }
   </style>
 </head>
@@ -97,7 +120,7 @@
 </div>
 
 <!-- Controls -->
-<div style="margin-top: 20px; text-align: center;">
+<div id="controls">
   <label>Starting time:
     <select id="hourSelect"></select>:
     <select id="minuteSelect">
@@ -118,6 +141,10 @@
   <br>
   <button onclick="startSession()">Start Session</button>
   <button onclick="resetTimer()">Reset</button>
+</div>
+
+<div id="footer">
+  <a href="https://hellomynameisariel.github.io/flowtools/" target="_blank">See All Flow Tools by Ariel</a>
 </div>
 
 <script>
@@ -159,6 +186,7 @@
     localStorage.setItem("focusEnd", end.getTime());
     localStorage.setItem("focusDuration", d);
 
+    document.getElementById("controls").style.display = "none";
     update();
     if (!window._timerInterval) window._timerInterval = setInterval(update, 1000);
   }
@@ -168,6 +196,7 @@
       localStorage.clear();
       clearInterval(window._timerInterval);
       window._timerInterval = null;
+      document.getElementById("controls").style.display = "block";
       status.textContent = "Time until next session";
       timerDisplay.textContent = "00:00";
       document.body.style.backgroundColor = "#000";
@@ -187,29 +216,32 @@
       const seconds = Math.floor((start - now) / 1000);
       if (seconds <= 120) {
         status.textContent = "Session starts in:";
-        setColors("#caffbf", "#000");
+        setColors("--bg-green", "--text-dark");
       } else {
         status.textContent = "Time until next session";
-        setColors("#fff3b0", "#000");
+        setColors("--bg-yellow", "--text-dark");
       }
       timerDisplay.textContent = formatTime(seconds);
     } else if (now < end) {
       const seconds = Math.floor((end - now) / 1000);
       status.textContent = "Time in session remaining";
       if (seconds <= 120) {
-        setColors("#ffadad", "#000");
+        setColors("--bg-red", "--text-dark");
       } else {
         const progress = (duration * 60 - seconds) / (duration * 60);
-        const light = Math.floor(progress * 255);
-        const bg = `rgb(${light},${light},${light})`;
-        const text = (light > 127) ? "#000" : "#fff";
-        setColors(bg, text);
+        const val = Math.floor(progress * 255);
+        const bg = `rgb(${val},${val},${val})`;
+        const text = (val > 127) ? "#000" : "#fff";
+        document.body.style.backgroundColor = bg;
+        document.body.style.color = text;
+        resizeLabel.style.color = text;
+        sliderBar.style.backgroundColor = bg;
       }
       timerDisplay.textContent = formatTime(seconds);
     } else {
       const seconds = Math.floor((now - end) / 1000);
       status.textContent = "Session complete. Time since end:";
-      setColors("#a0c4ff", "#000");
+      setColors("--bg-blue", "--text-dark");
       timerDisplay.textContent = formatTime(seconds);
     }
   }
@@ -220,14 +252,15 @@
     return `${m}:${s.toString().padStart(2, "0")}`;
   }
 
-  function setColors(bg, text) {
-    document.body.style.backgroundColor = bg;
-    document.body.style.color = text;
-    resizeLabel.style.color = text;
-    sliderBar.style.backgroundColor = bg;
+  function setColors(bgVar, textVar) {
+    document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue(bgVar).trim();
+    document.body.style.color = getComputedStyle(document.documentElement).getPropertyValue(textVar).trim();
+    resizeLabel.style.color = document.body.style.color;
+    sliderBar.style.backgroundColor = document.body.style.backgroundColor;
   }
 
   if (localStorage.getItem("focusStart")) {
+    document.getElementById("controls").style.display = "none";
     update();
     window._timerInterval = setInterval(update, 1000);
   }
