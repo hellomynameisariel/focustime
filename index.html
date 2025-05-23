@@ -13,6 +13,7 @@
       --bg-green: #a8e6cf;
       --bg-red: #d55e00;
       --bg-blue: #56b4e9;
+      --bg-orange: #ff9933;
       --bg-gray: #888;
     }
     body {
@@ -197,10 +198,15 @@ document.getElementById("startButton").addEventListener("click", () => {
   const h = parseInt(document.getElementById("hourSelect").value);
   const m = parseInt(document.getElementById("minuteSelect").value);
   const d = parseInt(document.getElementById("durationSelect").value);
-  let start = new Date();
-  start.setHours(h, m, 0, 0);
+
   const now = new Date();
-  if (start < now) start.setDate(start.getDate() + 1);
+  const start = new Date(now);
+  start.setHours(h, m, 0, 0);
+
+  if (start < now && (now - start) > 60 * 60000) {
+    start.setDate(start.getDate() + 1);
+  }
+
   const end = new Date(start.getTime() + d * 60000);
   localStorage.setItem("focusStart", start.getTime());
   localStorage.setItem("focusEnd", end.getTime());
@@ -231,20 +237,38 @@ function update() {
   const t = translations[lang];
   const status = document.getElementById("status");
   const timer = document.getElementById("timer");
+  const body = document.body;
+
   if (now < start) {
     const seconds = Math.floor((start - now) / 1000);
     status.textContent = seconds <= 120 ? t.sessionStarts : t.timeUntil;
     timer.textContent = formatTime(seconds);
+    body.style.backgroundColor = seconds <= 120 ? getComputedStyle(document.documentElement).getPropertyValue('--bg-orange') : getComputedStyle(document.documentElement).getPropertyValue('--bg-yellow');
+    body.style.color = getComputedStyle(document.documentElement).getPropertyValue('--text-dark');
   } else if (now < end) {
     const seconds = Math.floor((end - now) / 1000);
     status.textContent = t.inSession;
     timer.textContent = formatTime(seconds);
+    if (seconds <= 120) {
+      body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-orange');
+      body.style.color = getComputedStyle(document.documentElement).getPropertyValue('--text-dark');
+    } else {
+      const progress = (duration * 60 - seconds) / (duration * 60);
+      const val = Math.floor(progress * 255);
+      const bg = `rgb(${val},${val},${val})`;
+      const text = val > 127 ? '#000' : '#fff';
+      body.style.backgroundColor = bg;
+      body.style.color = text;
+    }
   } else {
     const seconds = Math.floor((now - end) / 1000);
     status.textContent = t.complete;
     timer.textContent = formatTime(seconds);
+    body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-blue');
+    body.style.color = getComputedStyle(document.documentElement).getPropertyValue('--text-dark');
   }
 }
+
 function formatTime(sec) {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
