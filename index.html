@@ -220,6 +220,32 @@ langSelect.addEventListener("change", () => setLanguage(langSelect.value));
 const savedLang = localStorage.getItem("focusLang") || "en";
 langSelect.value = savedLang;
 setLanguage(savedLang);
+
+const hourSelect = document.getElementById("hourSelect");
+const now = new Date();
+let currentHour = now.getHours();
+let currentMinutes = now.getMinutes();
+let roundedMinutes = [0, 15, 30, 45].find(m => m > currentMinutes);
+if (roundedMinutes === undefined) {
+  roundedMinutes = 0;
+  currentHour = (currentHour + 1) % 24;
+}
+const hourOptions = [
+  (currentHour - 1 + 24) % 24,
+  currentHour,
+  (currentHour + 1) % 24
+];
+
+document.getElementById("minuteSelect").value = roundedMinutes;
+
+hourOptions.forEach(h => {
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hour12 = ((h + 11) % 12 + 1);
+  const opt = new Option(`${hour12} ${ampm}`, h);
+  hourSelect.appendChild(opt);
+});
+
+hourSelect.value = currentHour;
 </script>
 </body>
 </html>
