@@ -158,10 +158,10 @@
 
 <script>
 const translations = {
-  en: { timeUntil: "Time until next session:", sessionStarts: "Session starts in:", inSession: "Time in session remaining:", complete: "Session complete. Time since end:", resize: "Resize:", startSession: "Start session", resetSession: "Reset session" },
-  fr: { timeUntil: "Temps jusqu'à la prochaine session :", sessionStarts: "La session commence dans :", inSession: "Temps restant de la session :", complete: "Session terminée. Temps depuis la fin :", resize: "Redimensionner :", startSession: "Démarrer la session", resetSession: "Réinitialiser la session" },
-  es: { timeUntil: "Tiempo hasta la siguiente sesión:", sessionStarts: "La sesión comienza en:", inSession: "Tiempo restante en sesión:", complete: "Sesión completada. Tiempo desde el final:", resize: "Tamaño:", startSession: "Iniciar sesión", resetSession: "Restablecer sesión" },
-  ar: { timeUntil: "الوقت حتى الجلسة التالية:", sessionStarts: "تبدأ الجلسة بعد:", inSession: "الوقت المتبقي في الجلسة:", complete: "اكتملت الجلسة. الوقت منذ الانتهاء:", resize: "تغيير الحجم:", startSession: "بدء الجلسة", resetSession: "إعادة ضبط الجلسة" }
+  en: { timeUntil: "Time until next session:", sessionStarts: "Session starts in:", inSession: "Time in session remaining:", complete: "Session complete. Time since end:", resize: "Resize:", startSession: "Start session", resetSession: "Reset session", confirmReset: "Do you really want to reset?" },
+  fr: { timeUntil: "Temps jusqu'à la prochaine session :", sessionStarts: "La session commence dans :", inSession: "Temps restant de la session :", complete: "Session terminée. Temps depuis la fin :", resize: "Redimensionner :", startSession: "Démarrer la session", resetSession: "Réinitialiser la session", confirmReset: "Voulez-vous vraiment réinitialiser ?" },
+  es: { timeUntil: "Tiempo hasta la siguiente sesión:", sessionStarts: "La sesión comienza en:", inSession: "Tiempo restante en sesión:", complete: "Sesión completada. Tiempo desde el final:", resize: "Tamaño:", startSession: "Iniciar sesión", resetSession: "Restablecer sesión", confirmReset: "¿Realmente quieres reiniciar?" },
+  ar: { timeUntil: "الوقت حتى الجلسة التالية:", sessionStarts: "تبدأ الجلسة بعد:", inSession: "الوقت المتبقي في الجلسة:", complete: "اكتملت الجلسة. الوقت منذ الانتهاء:", resize: "تغيير الحجم:", startSession: "بدء الجلسة", resetSession: "إعادة ضبط الجلسة", confirmReset: "هل أنت متأكد أنك تريد إعادة التعيين؟" }
 };
 
 function setLanguage(lang) {
@@ -208,14 +208,12 @@ document.getElementById("startButton").addEventListener("click", () => {
   const h = parseInt(hourSelect.value);
   const m = parseInt(minuteSelect.value);
   const d = parseInt(document.getElementById("durationSelect").value);
-
   const now = new Date();
   const start = new Date(now);
   start.setHours(h, m, 0, 0);
   if (start < now && (now - start) > 60 * 60000) {
     start.setDate(start.getDate() + 1);
   }
-
   const end = new Date(start.getTime() + d * 60000);
   localStorage.setItem("focusStart", start.getTime());
   localStorage.setItem("focusEnd", end.getTime());
@@ -226,7 +224,9 @@ document.getElementById("startButton").addEventListener("click", () => {
 });
 
 document.getElementById("resetButton").addEventListener("click", () => {
-  if (confirm("Do you really want to reset?")) {
+  const lang = localStorage.getItem("focusLang") || "en";
+  const t = translations[lang];
+  if (confirm(t.confirmReset)) {
     localStorage.removeItem("focusStart");
     localStorage.removeItem("focusEnd");
     localStorage.removeItem("focusDuration");
@@ -247,7 +247,6 @@ function update() {
   const status = document.getElementById("status");
   const timer = document.getElementById("timer");
   const body = document.body;
-
   if (now < start) {
     const seconds = Math.floor((start - now) / 1000);
     status.textContent = seconds <= 120 ? t.sessionStarts : t.timeUntil;
