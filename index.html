@@ -15,7 +15,6 @@
       --bg-blue: #56b4e9;
       --bg-gray: #888;
     }
-
     body {
       background-color: var(--bg-black);
       color: var(--text-light);
@@ -29,7 +28,6 @@
       padding: 10px;
       transition: background-color 1s, color 1s;
     }
-
     #popOutButton {
       background: none;
       border: none;
@@ -43,19 +41,16 @@
       flex-direction: column;
       align-items: center;
     }
-
     #popOutButton span {
       font-size: 0.7em;
       margin-top: 2px;
     }
-
     #languageSelect {
       position: absolute;
       top: 10px;
       left: 10px;
       font-size: 0.9em;
     }
-
     #status {
       margin-top: 40px;
       margin-bottom: 4px;
@@ -64,20 +59,17 @@
       border-radius: 6px;
       text-align: center;
     }
-
     #timer {
       font-size: var(--timer-font-size, 12vw);
       margin-top: 0;
       text-align: center;
     }
-
     .slider-label {
       margin-top: 10px;
       font-size: 0.7em;
       text-transform: lowercase;
       transition: color 0.3s ease;
     }
-
     .slider-bar {
       display: flex;
       align-items: center;
@@ -87,12 +79,10 @@
       background-color: rgba(255, 255, 255, 0.05);
       transition: background-color 0.3s ease;
     }
-
     input[type=range] {
       width: 160px;
       background: transparent;
     }
-
     select, button {
       font-size: 1em;
       margin: 4px;
@@ -103,12 +93,10 @@
       border-radius: 4px;
       cursor: pointer;
     }
-
     #controls, #footer {
       margin-top: 20px;
       text-align: center;
     }
-
     #footer a {
       font-size: 0.7em;
       color: #888;
@@ -155,11 +143,11 @@
     </select>
   </label>
   <br>
-  <button onclick="startSession()">Start session</button>
+  <button id="startButton">Start session</button>
 </div>
 
 <div id="resetWrapper" style="margin-top: 20px; text-align: center;">
-  <button onclick="resetTimer()">Reset session</button>
+  <button id="resetButton">Reset session</button>
 </div>
 
 <div id="footer">
@@ -168,59 +156,24 @@
 
 <script>
 const translations = {
-  en: {
-    timeUntil: "Time until next session:",
-    sessionStarts: "Session starts in:",
-    inSession: "Time in session remaining:",
-    complete: "Session complete. Time since end:",
-    resize: "Resize:",
-    startSession: "Start session",
-    resetSession: "Reset session"
-  },
-  fr: {
-    timeUntil: "Temps jusqu'à la prochaine session :",
-    sessionStarts: "La session commence dans :",
-    inSession: "Temps restant de la session :",
-    complete: "Session terminée. Temps depuis la fin :",
-    resize: "Redimensionner :",
-    startSession: "Démarrer la session",
-    resetSession: "Réinitialiser la session"
-  },
-  es: {
-    timeUntil: "Tiempo hasta la siguiente sesión:",
-    sessionStarts: "La sesión comienza en:",
-    inSession: "Tiempo restante en sesión:",
-    complete: "Sesión completada. Tiempo desde el final:",
-    resize: "Tamaño:",
-    startSession: "Iniciar sesión",
-    resetSession: "Restablecer sesión"
-  },
-  ar: {
-    timeUntil: "الوقت حتى الجلسة التالية:",
-    sessionStarts: "تبدأ الجلسة بعد:",
-    inSession: "الوقت المتبقي في الجلسة:",
-    complete: "اكتملت الجلسة. الوقت منذ الانتهاء:",
-    resize: "تغيير الحجم:",
-    startSession: "بدء الجلسة",
-    resetSession: "إعادة ضبط الجلسة"
-  }
+  en: { timeUntil: "Time until next session:", sessionStarts: "Session starts in:", inSession: "Time in session remaining:", complete: "Session complete. Time since end:", resize: "Resize:", startSession: "Start session", resetSession: "Reset session" },
+  fr: { timeUntil: "Temps jusqu'à la prochaine session :", sessionStarts: "La session commence dans :", inSession: "Temps restant de la session :", complete: "Session terminée. Temps depuis la fin :", resize: "Redimensionner :", startSession: "Démarrer la session", resetSession: "Réinitialiser la session" },
+  es: { timeUntil: "Tiempo hasta la siguiente sesión:", sessionStarts: "La sesión comienza en:", inSession: "Tiempo restante en sesión:", complete: "Sesión completada. Tiempo desde el final:", resize: "Tamaño:", startSession: "Iniciar sesión", resetSession: "Restablecer sesión" },
+  ar: { timeUntil: "الوقت حتى الجلسة التالية:", sessionStarts: "تبدأ الجلسة بعد:", inSession: "الوقت المتبقي في الجلسة:", complete: "اكتملت الجلسة. الوقت منذ الانتهاء:", resize: "تغيير الحجم:", startSession: "بدء الجلسة", resetSession: "إعادة ضبط الجلسة" }
 };
-
 function setLanguage(lang) {
   localStorage.setItem("focusLang", lang);
   const t = translations[lang];
   document.getElementById("status").textContent = t.timeUntil;
   document.getElementById("resizeLabel").textContent = t.resize;
-  document.querySelector("button[onclick='startSession()']").textContent = t.startSession;
-  document.querySelector("button[onclick='resetTimer()']").textContent = t.resetSession;
+  document.getElementById("startButton").textContent = t.startSession;
+  document.getElementById("resetButton").textContent = t.resetSession;
 }
-
 const langSelect = document.getElementById("languageSelect");
 langSelect.addEventListener("change", () => setLanguage(langSelect.value));
 const savedLang = localStorage.getItem("focusLang") || "en";
 langSelect.value = savedLang;
 setLanguage(savedLang);
-
 const hourSelect = document.getElementById("hourSelect");
 const now = new Date();
 let currentHour = now.getHours();
@@ -230,22 +183,73 @@ if (roundedMinutes === undefined) {
   roundedMinutes = 0;
   currentHour = (currentHour + 1) % 24;
 }
-const hourOptions = [
-  (currentHour - 1 + 24) % 24,
-  currentHour,
-  (currentHour + 1) % 24
-];
-
+const hourOptions = [(currentHour - 1 + 24) % 24, currentHour, (currentHour + 1) % 24];
 document.getElementById("minuteSelect").value = roundedMinutes;
-
 hourOptions.forEach(h => {
   const ampm = h >= 12 ? "PM" : "AM";
   const hour12 = ((h + 11) % 12 + 1);
   const opt = new Option(`${hour12} ${ampm}`, h);
   hourSelect.appendChild(opt);
 });
-
 hourSelect.value = currentHour;
+
+document.getElementById("startButton").addEventListener("click", () => {
+  const h = parseInt(document.getElementById("hourSelect").value);
+  const m = parseInt(document.getElementById("minuteSelect").value);
+  const d = parseInt(document.getElementById("durationSelect").value);
+  let start = new Date();
+  start.setHours(h, m, 0, 0);
+  const now = new Date();
+  if (start < now) start.setDate(start.getDate() + 1);
+  const end = new Date(start.getTime() + d * 60000);
+  localStorage.setItem("focusStart", start.getTime());
+  localStorage.setItem("focusEnd", end.getTime());
+  localStorage.setItem("focusDuration", d);
+  document.getElementById("controls").style.display = "none";
+  update();
+  if (!window._timerInterval) window._timerInterval = setInterval(update, 1000);
+});
+
+document.getElementById("resetButton").addEventListener("click", () => {
+  if (confirm("Do you really want to reset?")) {
+    localStorage.removeItem("focusStart");
+    localStorage.removeItem("focusEnd");
+    localStorage.removeItem("focusDuration");
+    clearInterval(window._timerInterval);
+    window._timerInterval = null;
+    location.reload();
+  }
+});
+
+function update() {
+  const start = parseInt(localStorage.getItem("focusStart"));
+  const end = parseInt(localStorage.getItem("focusEnd"));
+  const duration = parseInt(localStorage.getItem("focusDuration"));
+  const now = Date.now();
+  if (!start || !end || !duration) return;
+  const lang = localStorage.getItem("focusLang") || "en";
+  const t = translations[lang];
+  const status = document.getElementById("status");
+  const timer = document.getElementById("timer");
+  if (now < start) {
+    const seconds = Math.floor((start - now) / 1000);
+    status.textContent = seconds <= 120 ? t.sessionStarts : t.timeUntil;
+    timer.textContent = formatTime(seconds);
+  } else if (now < end) {
+    const seconds = Math.floor((end - now) / 1000);
+    status.textContent = t.inSession;
+    timer.textContent = formatTime(seconds);
+  } else {
+    const seconds = Math.floor((now - end) / 1000);
+    status.textContent = t.complete;
+    timer.textContent = formatTime(seconds);
+  }
+}
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
 </script>
 </body>
 </html>
